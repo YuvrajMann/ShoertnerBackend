@@ -1,12 +1,13 @@
 const express = require('express')
 const mongoose = require('mongoose')
 const ShortUrl = require('./models/shortUrl')
+const cors=require('cors');
 const app = express()
 
-mongoose.connect('mongodb://localhost/urlShortener', {
+mongoose.connect('mongodb://127.0.0.1:27017/urlShortener', {
   useNewUrlParser: true, useUnifiedTopology: true
 })
-
+app.use(cors());
 app.set('view engine', 'ejs')
 app.use(express.urlencoded({ extended: false }))
 
@@ -15,10 +16,14 @@ app.get('/', async (req, res) => {
   res.render('index', { shortUrls: shortUrls })
 })
 
-app.post('/shortUrls', async (req, res) => {
-  await ShortUrl.create({ full: req.body.fullUrl })
-
-  res.redirect('/')
+app.post('/shortUrls', (req, res,next) => {
+  ShortUrl.create({ full: req.body.fullUrl }).then((shrt_url)=>{
+    res.statusCode=200;
+    res.end(shrt_url.short);
+  })
+    .catch((err)=>{
+      next(err);
+    })
 })
 
 app.get('/:shortUrl', async (req, res) => {
